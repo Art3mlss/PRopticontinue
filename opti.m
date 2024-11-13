@@ -6,9 +6,6 @@
 R = 1.5;  % Rayon du cercle
 n = 30;  % Nombre de points
 
-% Génération des points (x_i, y_i) autour du cercle de centre (0,0)
-theta = linspace(0, 2*pi, n);
-
 % Définition des intervalles de cx et cy
 cx_vals1 = linspace(-1, 1, 100);
 cy_vals1 = linspace(-1, 2, 100);
@@ -32,11 +29,6 @@ end
 % Paramètres
 R = 1.5;  % Rayon du cercle
 n = 30;  % Nombre de points
-
-% Génération des points (x_i, y_i) autour du cercle de centre (0,0)
-theta = linspace(0, 2*pi, n);
-x = R * cos(theta) + 0.1*randn(1, n); % ajout de bruit pour simuler les erreurs de mesure
-y = R * sin(theta) + 0.1*randn(1, n);
 
 % Définition des intervalles de cx et cy
 cx_vals1 = linspace(-1, 1, 100);
@@ -158,3 +150,83 @@ hold off;
 
 % Cela montre que notre fonction cout est merdique, faut la changer en fait
 % pour avoir
+
+%% Question 4)
+
+% Fonction de calcul
+dbtype("gradient_CTLS.m");
+
+% Paramètres pour la vérification
+cx_test = 0.5;
+cy_test = 1.0;
+R = 1.5;
+epsilon = 1e-5;  % Petite perturbation pour les différences finies
+
+% Points de mesure
+theta = linspace(0, 2*pi, 100);
+x = R * cos(theta) + 0.05 * randn(1, 100);  % Bruit ajouté pour simuler les erreurs
+y = R * sin(theta) + 0.05 * randn(1, 100);
+
+function cost = CTLS(cx, cy)
+    global xi yi R;
+    cost = 0;
+    
+    for i = 1:size(xi)
+        Di = sqrt((xi(i) - cx)^2 + (yi(i) - cy)^2);
+        cost = cost + (Di - R)^2;
+    end
+end
+
+% Gradient analytique
+grad_analytique = gradient_CTLS(cx_test, cy_test);
+
+% Gradient numérique par différences finies
+cost_plus_cx = CTLS(cx_test + epsilon, cy_test);
+cost_minus_cx = CTLS(cx_test - epsilon, cy_test);
+grad_num_cx = (cost_plus_cx - cost_minus_cx) / (2 * epsilon);
+
+cost_plus_cy = CTLS(cx_test, cy_test + epsilon);
+cost_minus_cy = CTLS(cx_test, cy_test - epsilon);
+grad_num_cy = (cost_plus_cy - cost_minus_cy) / (2 * epsilon);
+
+grad_numerique = [grad_num_cx; grad_num_cy];
+
+% Affichage des résultats
+disp('Gradient analytique :');
+disp(grad_analytique);
+disp('Gradient numérique (différences finies) :');
+disp(grad_numerique);
+disp('Différence entre les deux gradients :');
+disp(norm(grad_analytique - grad_numerique));
+
+%% Question 5)
+
+% Tracer les lignes de niveaux de la fonction de coût
+figure;
+
+contourf(Cx2, Cy2, CTLS2, 20);  % Affichage 2D en niveaux de contour
+title('CTLS en 2D (contour) sur [-1, 4] × [-1, 4]');
+xlabel('cx'); ylabel('cy'); zlabel('CTLS');
+colorbar;
+hold on;
+
+% Calcul de la fonction de coût et du gradient sur la grille
+for i = 1:size(Cx2)
+    for j=1:size(Cy2)
+        cx = Cx2(i, j);
+        cy = Cy2(i, j);
+        
+        % Calcul du gradient
+        grad = gradient_CTLS(cx, cy);
+    end
+end
+
+% Représenter le champ de vecteurs du gradient
+quiver(CX, CY, grad_x, grad_y, 'r');  % Vecteurs en rouge
+
+% Ajustements de l'affichage
+axis equal;  % Repère orthonormé
+title('Champ de vecteurs du gradient et lignes de niveau de CTLS');
+xlabel('cx');
+ylabel('cy');
+hold off;
